@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meetup</title>
+<style>
+  body{font-family:sans-serif;background:#111;color:#eee;margin:0;padding:20px}
+  .card{max-width:380px;margin:40px auto;background:#1c1c1c;padding:20px;border-radius:14px}
+  input,button{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:0;font-size:16px;box-sizing:border-box}
+  input{background:#2a2a2a;color:#eee}
+  button{background:#e91e63;color:#fff;font-weight:bold}
+  button.g{background:#fff;color:#222}
+  button.s{background:#333}
+  #msg{color:#ff8a80;min-height:20px;font-size:14px}
+  .hide{display:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>Meetup</h2>
+  <p id="msg"></p>
+
+  <div id="loginBox" class="hide">
+    <button class="g" id="googleBtn">Continue with Google</button>
+    <p style="text-align:center">or</p>
+    <input id="email" type="email" placeholder="Email">
+    <input id="pass" type="password" placeholder="Password (min 6)">
+    <button id="loginBtn">Log in</button>
+    <button class="s" id="signupBtn">Create account</button>
+  </div>
+
+  <div id="ageBox" class="hide">
+    <p>One last step. You must be 18 or older.</p>
+    <input id="name" placeholder="Your name">
+    <label>Date of birth</label>
+    <input id="dob" type="date">
+    <button id="ageBtn">Continue</button>
+  </div>
+
+  <div id="homeBox" class="hide">
+    <p id="welcome"></p>
+    <button class="s" id="logoutBtn">Log out</button>
+  </div>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
