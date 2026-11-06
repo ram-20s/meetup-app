@@ -17,8 +17,7 @@ onAuthStateChanged(auth, async user => {
   if (!user) return show("loginBox");
   const snap = await getDoc(doc(db, "users", user.uid));
   if (snap.exists() && snap.data().dob) {
-    $("welcome").textContent = "Welcome, " + snap.data().name + "!";
-    show("homeBox");
+    location.href = "home.html";
   } else {
     $("name").value = user.displayName || "";
     show("ageBox");
