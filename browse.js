@@ -26,7 +26,10 @@ export async function loadPeople(myUid, box) {
     info.textContent = [u.gender, u.city].filter(Boolean).join(" · ");
     const bio = document.createElement("div");
     bio.textContent = u.bio;
-    row.append(title, info, bio);
+    const btn = document.createElement("button");
+    btn.textContent = "Message";
+    btn.onclick = () => { location.href = "chat.html?uid=" + s.id; };
+    row.append(title, info, bio, btn);
     box.append(row);
   });
   if (!count) box.textContent = "No profiles yet. Invite a friend to join!";
