@@ -1,7 +1,7 @@
 import "./photo.js";
 import { db } from "./firebase.js";
 import { collection, getDocs, limit, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getBlockSets, blockUser, unblockUser, reportUser } from "./safety.js";
+import { getBlockSets, blockUser, unblockUser, reportUser, askReason } from "./safety.js";
 
 const ageOf = dob => {
   const d = new Date(dob), n = new Date();
@@ -103,10 +103,10 @@ function render() {
         } catch (e) { alert("Could not block. Please try again."); }
       }),
       btn("Report", "s", async () => {
-        const reason = prompt("Why are you reporting " + u.name + "? (for example: fake profile, nude photo, harassment)");
-        if (!reason || !reason.trim()) return;
+        const reason = await askReason(u.name);
+        if (!reason) return;
         try {
-          await reportUser(myId, p.id, reason.trim());
+          await reportUser(myId, p.id, reason);
           alert("Thanks. Your report was sent for review.");
         } catch (e) { alert("Could not send the report. Please try again."); }
       })
