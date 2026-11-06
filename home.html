@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meetup</title>
+<style>
+body{font-family:sans-serif;background:#111;color:#eee;margin:0;padding:16px}
+.card{max-width:420px;margin:16px auto;background:#1c1c1c;padding:16px;border-radius:14px}
+input,select,textarea,button{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:0;font-size:16px;box-sizing:border-box;background:#2a2a2a;color:#eee;font-family:inherit}
+button{background:#e91e63;color:#fff;font-weight:bold}
+button.s{background:#333}
+.nav{display:flex;gap:8px;max-width:420px;margin:0 auto}
+.nav button{margin:0}
+.hide{display:none}
+.p{border-top:1px solid #333;padding:10px 0}
+#msg{color:#8fd694;min-height:18px}
+</style>
+</head>
+<body>
+<div class="nav">
+  <button class="s" id="tabBrowse">Browse</button>
+  <button class="s" id="tabMe">My profile</button>
+  <button class="s" id="logout">Log out</button>
+</div>
+
+<div class="card" id="browseBox">
+  <h3>People</h3>
+  <div id="list">Loading...</div>
+</div>
+
+<div class="card hide" id="meBox">
+  <h3>My profile</h3>
+  <input id="name" placeholder="Name">
+  <select id="gender">
+    <option value="">I am...</option>
+    <option>Man</option>
+    <option>Woman</option>
+    <option>Other</option>
+  </select>
+  <select id="looking">
+    <option value="">Looking for...</option>
+    <option>Men</option>
+    <option>Women</option>
+    <option>Everyone</option>
+  </select>
+  <input id="city" placeholder="City">
+  <textarea id="bio" rows="4" placeholder="About me"></textarea>
+  <button id="saveBtn">Save profile</button>
+  <p id="msg"></p>
+</div>
+
+<script type="module" src="home.js"></script>
+</body>
+</html>
