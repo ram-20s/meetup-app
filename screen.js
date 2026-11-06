@@ -1,12 +1,8 @@
-const SOURCES = [
-  {
-    tf: "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js",
-    nsfw: "https://cdn.jsdelivr.net/npm/nsfwjs@4.2.0/dist/browser/nsfwjs.min.js"
-  },
-  {
-    tf: "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js",
-    nsfw: "https://cdn.jsdelivr.net/npm/nsfwjs@2.4.2/dist/nsfwjs.min.js"
-  }
+const TF = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js";
+const NSFW = "https://cdn.jsdelivr.net/npm/nsfwjs@4.2.0/dist/browser/nsfwjs.min.js";
+const MODELS = [
+  "https://cdn.jsdelivr.net/npm/nsfwjs@4.2.0/dist/models/mobilenet_v2/",
+  "https://cdn.jsdelivr.net/gh/infinitered/nsfwjs@master/models/mobilenet_v2/"
 ];
 
 const loadScript = src => new Promise((resolve, reject) => {
@@ -20,16 +16,15 @@ const loadScript = src => new Promise((resolve, reject) => {
 let modelPromise = null;
 
 async function tryLoad() {
+  await loadScript(TF);
+  await loadScript(NSFW);
+  if (!window.nsfwjs) throw new Error("checker did not start");
   const errors = [];
-  for (const src of SOURCES) {
+  for (const url of MODELS) {
     try {
-      window.nsfwjs = undefined;
-      await loadScript(src.tf);
-      await loadScript(src.nsfw);
-      if (!window.nsfwjs) throw new Error("checker did not start");
-      return await window.nsfwjs.load();
+      return await window.nsfwjs.load(url, { type: "graph" });
     } catch (e) {
-      errors.push(e.message || String(e));
+      errors.push(url.split("/")[3] + ": " + String((e && e.message) || e).slice(0, 80));
     }
   }
   throw new Error(errors.join(" | "));
