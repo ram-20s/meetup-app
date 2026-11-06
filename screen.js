@@ -1,30 +1,47 @@
-const TF = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js";
-const NSFW = "https://cdn.jsdelivr.net/npm/nsfwjs@4.2.0/dist/browser/nsfwjs.min.js";
+const SOURCES = [
+  {
+    tf: "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js",
+    nsfw: "https://cdn.jsdelivr.net/npm/nsfwjs@4.2.0/dist/browser/nsfwjs.min.js"
+  },
+  {
+    tf: "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js",
+    nsfw: "https://cdn.jsdelivr.net/npm/nsfwjs@2.4.2/dist/nsfwjs.min.js"
+  }
+];
 
 const loadScript = src => new Promise((resolve, reject) => {
   const s = document.createElement("script");
   s.src = src;
   s.onload = resolve;
-  s.onerror = () => reject(new Error("load failed"));
+  s.onerror = () => reject(new Error("could not download " + src));
   document.head.append(s);
 });
 
 let modelPromise = null;
-const getModel = () => {
-  if (!modelPromise) {
-    modelPromise = (async () => {
-      await loadScript(TF);
-      await loadScript(NSFW);
+
+async function tryLoad() {
+  const errors = [];
+  for (const src of SOURCES) {
+    try {
+      window.nsfwjs = undefined;
+      await loadScript(src.tf);
+      await loadScript(src.nsfw);
+      if (!window.nsfwjs) throw new Error("checker did not start");
       return await window.nsfwjs.load();
-    })();
-    modelPromise.catch(() => { modelPromise = null; });
+    } catch (e) {
+      errors.push(e.message || String(e));
+    }
   }
-  return modelPromise;
-};
+  throw new Error(errors.join(" | "));
+}
 
 export async function checkPhoto(canvas) {
   try {
-    const model = await getModel();
+    if (!modelPromise) {
+      modelPromise = tryLoad();
+      modelPromise.catch(() => { modelPromise = null; });
+    }
+    const model = await modelPromise;
     const preds = await model.classify(canvas);
     const p = {};
     preds.forEach(x => { p[x.className] = x.probability; });
@@ -34,6 +51,7 @@ export async function checkPhoto(canvas) {
     }
     return { ok: true };
   } catch (e) {
-    return { ok: false, reason: "The photo check could not start, so the photo was not uploaded. Check your internet and try again." };
+    const why = String((e && e.message) || e).slice(0, 300);
+    return { ok: false, reason: "The photo check could not start, so the photo was not uploaded. Details: " + why };
   }
 }
