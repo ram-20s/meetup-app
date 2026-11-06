@@ -6,52 +6,48 @@
 <title>Meetup</title>
 <style>
 body{font-family:sans-serif;background:#111;color:#eee;margin:0;padding:20px}
-.card{max-width:380px;margin:40px auto;background:#1c1c1c;padding:20px;border-radius:14px}
+.wrap{max-width:380px;margin:0 auto}
+.card{background:#1c1c1c;padding:20px;border-radius:14px;margin:16px 0}
 input,button{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:0;font-size:16px;box-sizing:border-box}
 input{background:#2a2a2a;color:#eee}
 button{background:#e91e63;color:#fff;font-weight:bold}
-button.g{background:#fff;color:#222}
 button.s{background:#333}
 button.l{background:none;color:#aaa;font-weight:normal;text-decoration:underline}
-.tabs{display:flex;gap:8px;margin-top:10px}
+h3{margin:0 0 8px}
 #msg{min-height:20px;font-size:14px;color:#ff8a80}
-.hint{font-size:13px;color:#aaa}
 .hide{display:none}
 </style>
 </head>
 <body>
-<div class="card">
+<div class="wrap">
   <h2>Meetup</h2>
   <p id="msg"></p>
 
   <div id="loginBox" class="hide">
-    <button class="g" id="googleBtn">Continue with Google</button>
-    <div class="tabs">
-      <button class="s" id="tabPhone">Phone OTP</button>
-      <button class="s" id="tabEmail">Email</button>
+    <div class="card">
+      <h3>New here?</h3>
+      <input id="newEmail" type="email" placeholder="Your Gmail address" autocomplete="email">
+      <input id="newPass" type="password" placeholder="Create a password (min 6)" autocomplete="new-password">
+      <button id="signupBtn">Continue with new Gmail</button>
     </div>
-
-    <div id="phonePanel">
-      <input id="phone" type="tel" placeholder="+91 98765 43210" autocomplete="tel">
-      <p class="hint">Include your country code, like +91.</p>
-      <button id="sendOtp">Send OTP</button>
-      <div id="otpRow" class="hide">
-        <input id="otp" inputmode="numeric" maxlength="6" placeholder="6-digit OTP">
-        <button id="verifyOtp">Verify and log in</button>
-      </div>
-    </div>
-
-    <div id="emailPanel" class="hide">
-      <input id="email" type="email" placeholder="Email" autocomplete="email">
-      <input id="pass" type="password" placeholder="Password (min 6)" autocomplete="current-password">
-      <button id="loginBtn">Log in</button>
-      <button class="s" id="signupBtn">Create account</button>
+    <div class="card">
+      <h3>Already have an account?</h3>
+      <input id="oldEmail" type="email" placeholder="Registered Gmail address" autocomplete="email">
+      <input id="oldPass" type="password" placeholder="Your password" autocomplete="current-password">
+      <button class="s" id="loginBtn">Log in</button>
       <button class="l" id="forgotBtn">Forgot password?</button>
     </div>
-    <div id="rc"></div>
   </div>
 
-  <div id="ageBox" class="hide">
+  <div id="verifyBox" class="hide card">
+    <h3>Verify your email</h3>
+    <p>We sent a verification link to <b id="vEmail"></b>. Open your email, tap the link, then come back here and tap the button below. Check your spam folder too.</p>
+    <button id="checkBtn">I have verified my email</button>
+    <button class="s" id="resendBtn">Resend link</button>
+    <button class="l" id="backBtn">Use a different email</button>
+  </div>
+
+  <div id="ageBox" class="hide card">
     <p>One last step. You must be 18 or older.</p>
     <input id="name" placeholder="Your name">
     <label>Date of birth</label>
