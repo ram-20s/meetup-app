@@ -16,7 +16,6 @@ export function setupAge($, say, run, show) {
       return signOut(auth);
     }
     await setDoc(doc(db, "users", auth.currentUser.uid), { name, dob, createdAt: serverTimestamp() });
-    $("welcome").textContent = "Welcome, " + name + "!";
-    show("homeBox");
+    location.href = "home.html";
   });
 }
