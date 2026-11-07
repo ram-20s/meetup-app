@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin check</title>
+<style>
+body{font-family:sans-serif;background:#111;color:#eee;padding:16px;word-break:break-all}
+p{margin:10px 0}
+</style>
+</head>
+<body>
+<h3>Admin check</h3>
+<div id="out">Loading...</div>
+<script type="module">
+import { auth, db } from "./firebase.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const out = document.getElementById("out");
+const line = t => {
+  const p = document.createElement("p");
+  p.textContent = t;
+  out.append(p);
+};
+
+onAuthStateChanged(auth, async user => {
+  out.textContent = "";
+  line("Project: " + db.app.options.projectId);
+  if (!user) { line("Not logged in. Log in at the main page first."); return; }
+  line("Email: " + user.email);
+  line("UID: " + user.uid);
+  line("Email verified (page): " + user.emailVerified);
+  try {
+    const t = await user.getIdTokenResult(true);
+    line("Email verified (token): " + t.claims.email_verified);
+    line("Signed in with: " + t.signInProvider);
+  } catch (e) {
+    line("Token error: " + e.message);
+  }
+  try {
+    const s = await getDoc(doc(db, "admins", user.uid));
+    line("Admin record found: " + s.exists());
+  } catch (e) {
+    line("Read error: " + (e.code || "") + " " + e.message);
+  }
+});
+</script>
+</body>
+</html>
