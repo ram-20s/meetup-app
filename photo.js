@@ -1,11 +1,12 @@
 import { auth, db } from "./firebase.js";
-import { checkPhoto } from "./screen.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const MAX = 256;
 const MAX_FILE = 15 * 1024 * 1024;
 const TARGET = 27000;
+
+const isImg = u => typeof u === "string" && u.startsWith("data:image/jpeg;base64,");
 
 function resize(file) {
   return new Promise((resolve, reject) => {
@@ -24,7 +25,7 @@ function resize(file) {
         q -= 0.1;
         out = c.toDataURL("image/jpeg", q);
       }
-      resolve({ dataUrl: out, canvas: c });
+      resolve(out);
     };
     img.onerror = () => reject(new Error("Could not read this image."));
     img.src = url;
@@ -63,7 +64,7 @@ onAuthStateChanged(auth, async user => {
 
   const note = document.createElement("small");
   note.style.cssText = "display:block;color:#aaa;margin-top:4px";
-  note.textContent = "Any photo works. It is shrunk automatically to about 20 KB. Nude or sexual photos are not allowed and lead to a ban.";
+  note.textContent = "Any photo works. It is shrunk automatically to about 20 KB. Every photo is reviewed before it appears. Nude or sexual photos are not allowed and lead to a ban.";
 
   const status = document.createElement("div");
   status.style.cssText = "min-height:18px;margin-top:4px";
@@ -71,35 +72,45 @@ onAuthStateChanged(auth, async user => {
   wrap.append(label, preview, choose, rm, note, status, input);
   save.before(wrap);
 
-  const show = url => {
-    const ok = typeof url === "string" && url.startsWith("data:image/jpeg;base64,");
-    preview.style.display = ok ? "block" : "none";
-    rm.style.display = ok ? "block" : "none";
-    if (ok) preview.src = url;
+  const refresh = async () => {
+    const d = (await getDoc(ref)).data() || {};
+    const url = isImg(d.pendingPhoto) ? d.pendingPhoto : (isImg(d.photo) ? d.photo : "");
+    preview.style.display = url ? "block" : "none";
+    if (url) preview.src = url;
+    rm.style.display = url ? "block" : "none";
+    if (isImg(d.pendingPhoto)) {
+      status.textContent = "Waiting for approval. It will show on your profile once approved.";
+    } else if (d.photoNote === "rejected") {
+      status.textContent = "Your last photo was not approved. Please choose a different one.";
+    } else {
+      status.textContent = "";
+    }
   };
-  show(((await getDoc(ref)).data() || {}).photo);
+  await refresh();
 
   input.onchange = async () => {
     const f = input.files[0];
     if (!f) return;
     if (!f.type.startsWith("image/")) { status.textContent = "Please choose an image."; return; }
     if (f.size > MAX_FILE) { status.textContent = "This photo is too large. Please choose one under 15 MB."; input.value = ""; return; }
-    status.textContent = "Checking photo...";
+    status.textContent = "Preparing photo...";
     try {
-      const { dataUrl, canvas } = await resize(f);
-      const res = await checkPhoto(canvas);
-      if (!res.ok) { status.textContent = res.reason; input.value = ""; return; }
-      await setDoc(ref, { photo: dataUrl }, { merge: true });
-      show(dataUrl);
-      status.textContent = "Photo saved!";
+      const dataUrl = await resize(f);
+      await setDoc(ref, { pendingPhoto: dataUrl, photoNote: deleteField() }, { merge: true });
+      input.value = "";
+      await refresh();
     } catch (e) {
       status.textContent = e.message;
     }
   };
 
   rm.onclick = async () => {
-    await updateDoc(ref, { photo: deleteField() });
-    show("");
-    status.textContent = "Photo removed.";
+    try {
+      await updateDoc(ref, { photo: deleteField(), pendingPhoto: deleteField() });
+      await refresh();
+      status.textContent = "Photo removed.";
+    } catch (e) {
+      status.textContent = "Could not remove the photo. Please try again.";
+    }
   };
 });
