@@ -7,43 +7,64 @@
 <style>
 body{font-family:sans-serif;background:#111;color:#eee;padding:16px;word-break:break-all}
 p{margin:10px 0}
+button{width:100%;padding:14px;border:0;border-radius:8px;background:#e91e63;color:#fff;font-weight:bold;font-size:16px;margin:8px 0}
+a{color:#e91e63}
 </style>
 </head>
 <body>
 <h3>Admin check</h3>
 <div id="out">Loading...</div>
+<button id="make" style="display:none">Make me admin</button>
+<p id="result"></p>
 <script type="module">
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const out = document.getElementById("out");
+const make = document.getElementById("make");
+const result = document.getElementById("result");
 const line = t => {
   const p = document.createElement("p");
   p.textContent = t;
   out.append(p);
 };
 
+const check = async user => {
+  try {
+    const s = await getDoc(doc(db, "admins", user.uid));
+    return s.exists();
+  } catch (e) {
+    line("Read error: " + (e.code || "") + " " + e.message);
+    return false;
+  }
+};
+
 onAuthStateChanged(auth, async user => {
   out.textContent = "";
-  line("Project: " + db.app.options.projectId);
   if (!user) { line("Not logged in. Log in at the main page first."); return; }
   line("Email: " + user.email);
   line("UID: " + user.uid);
-  line("Email verified (page): " + user.emailVerified);
-  try {
-    const t = await user.getIdTokenResult(true);
-    line("Email verified (token): " + t.claims.email_verified);
-    line("Signed in with: " + t.signInProvider);
-  } catch (e) {
-    line("Token error: " + e.message);
+  const found = await check(user);
+  line("Admin record found: " + found);
+  if (found) {
+    result.textContent = "You are an admin. Open admin.html now.";
+    return;
   }
-  try {
-    const s = await getDoc(doc(db, "admins", user.uid));
-    line("Admin record found: " + s.exists());
-  } catch (e) {
-    line("Read error: " + (e.code || "") + " " + e.message);
-  }
+  make.style.display = "block";
+  make.onclick = async () => {
+    result.textContent = "Working...";
+    try {
+      await setDoc(doc(db, "admins", user.uid), { admin: true });
+      const ok = await check(user);
+      result.textContent = ok
+        ? "Done! You are now an admin. Open admin.html."
+        : "Saved, but the record still can not be read.";
+      if (ok) make.style.display = "none";
+    } catch (e) {
+      result.textContent = "Failed: " + (e.code || "") + " " + e.message;
+    }
+  };
 });
 </script>
 </body>
