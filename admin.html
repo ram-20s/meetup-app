@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin</title>
+<style>
+body{font-family:sans-serif;background:#111;color:#eee;margin:0;padding:16px}
+.wrap{max-width:460px;margin:0 auto}
+.card{background:#1c1c1c;border-radius:14px;padding:14px;margin:12px 0}
+button{padding:10px 14px;border:0;border-radius:8px;background:#e91e63;color:#fff;font-weight:bold;font-size:15px;margin:4px 4px 4px 0}
+button.s{background:#333}
+.tabs{display:flex;gap:8px}
+.tabs button{flex:1;margin:0}
+img{width:160px;height:160px;object-fit:cover;border-radius:12px;display:block;margin:8px 0}
+small{color:#aaa}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Admin</h2>
+  <p id="msg">Loading...</p>
+  <div id="panel" class="hide">
+    <div class="tabs">
+      <button id="tPhotos">Photos</button>
+      <button class="s" id="tReports">Reports</button>
+    </div>
+    <div id="photos"></div>
+    <div id="reports" class="hide"></div>
+  </div>
+  <p><a href="home.html" style="color:#e91e63">Back to app</a></p>
+</div>
+<script type="module">
+import { auth, db } from "./firebase.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc, getDocs, updateDoc, deleteDoc, deleteField, collection, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const $ = id => document.getElementById(id);
+const isImg = u => typeof u === "string" && u.startsWith("data:image/jpeg;base64,");
+const mk = (tag, text) => {
+  const e = document.createElement(tag);
+  if (text) e.textContent = text;
+  return e;
+};
+const btn = (label, cls, fn) => {
+  const b = mk("button", label);
+  if (cls) b.className = cls;
+  b.onclick = fn;
+  return b;
+};
+const fail = e => alert("That did not work: " + (e.message || e));
+
+const cache = {};
+async function userOf(id) {
+  if (!cache[id]) {
+    const s = await getDoc(doc(db, "users", id));
+    cache[id] = s.exists() ? s.data() : {};
+  }
+  return cache[id];
+}
+
+async function loadPhotos() {
+  const box = $("photos");
+  box.textContent = "Loading...";
+  const snap = await getDocs(query(collection(db, "users"), where("pendingPhoto", ">", ""), limit(50)));
+  box.textContent = "";
+  let n = 0;
+  snap.forEach(s => {
+    const u = s.data();
+    if (!isImg(u.pendingPhoto)) return;
+    n++;
+    const card = mk("div");
+    card.className = "card";
+    const img = document.createElement("img");
+    img.src = u.pendingPhoto;
+    const approve = btn("Approve", "", async () => {
+      try {
+        await updateDoc(doc(db, "users", s.id), { photo: u.pendingPhoto, pendingPhoto: deleteField(), photoNote: deleteField() });
+        card.remove();
+      } catch (e) { fail(e); }
+    });
+    const reject = btn("Reject", "s", async () => {
+      try {
+        await updateDoc(doc(db, "users", s.id), { pendingPhoto: deleteField(), photoNote: "rejected" });
+        card.remove();
+      } catch (e) { fail(e); }
+    });
+    const ban = btn("Reject and ban", "s", async () => {
+      if (!confirm("Reject this photo and ban " + (u.name || "this user") + "?")) return;
+      try {
+        await updateDoc(doc(db, "users", s.id), { pendingPhoto: deleteField(), photoNote: "rejected", banned: true });
+        card.remove();
+      } catch (e) { fail(e); }
+    });
+    card.append(mk("b", u.name || "Unnamed"), img, approve, reject, ban);
+    box.append(card);
+  });
+  if (!n) box.append(mk("p", "No photos waiting for approval."));
+}
+
+async function loadReports() {
+  const box = $("reports");
+  box.textContent = "Loading...";
+  const snap = await getDocs(query(collection(db, "reports"), orderBy("at", "desc"), limit(50)));
+  box.textContent = "";
+  if (snap.empty) { box.append(mk("p", "No reports.")); return; }
+  for (const s of snap.docs) {
+    const r = s.data();
+    const bad = await userOf(r.reportedId);
+    const rep = await userOf(r.reporterId);
+    const card = mk("div");
+    card.className = "card";
+    card.append(mk("b", "Reported: " + (bad.name || r.reportedId)));
+    if (isImg(bad.photo)) {
+      const img = document.createElement("img");
+      img.src = bad.photo;
+      card.append(img);
+    }
+    card.append(mk("div", "Reason: " + r.reason));
+    card.append(mk("small", "By " + (rep.name || "unknown") + " · " + new Date(r.at).toLocaleString()));
+    card.append(document.createElement("br"));
+    const banBtn = btn(bad.banned ? "Unban" : "Ban user", "", async () => {
+      try {
+        const v = !bad.banned;
+        await updateDoc(doc(db, "users", r.reportedId), { banned: v });
+        bad.banned = v;
+        banBtn.textContent = v ? "Unban" : "Ban user";
+      } catch (e) { fail(e); }
+    });
+    const dismiss = btn("Dismiss report", "s", async () => {
+      try {
+        await deleteDoc(doc(db, "reports", s.id));
+        card.remove();
+      } catch (e) { fail(e); }
+    });
+    card.append(banBtn, dismiss);
+    box.append(card);
+  }
+}
+
+const tab = which => {
+  $("photos").classList.toggle("hide", which !== "photos");
+  $("reports").classList.toggle("hide", which !== "reports");
+  $("tPhotos").className = which === "photos" ? "" : "s";
+  $("tReports").className = which === "reports" ? "" : "s";
+};
+$("tPhotos").onclick = () => tab("photos");
+$("tReports").onclick = () => tab("reports");
+
+onAuthStateChanged(auth, async user => {
+  if (!user) { location.href = "index.html"; return; }
+  let ok = false;
+  try { ok = (await getDoc(doc(db, "admins", user.uid))).exists(); } catch (e) {}
+  if (!ok) {
+    $("msg").textContent = "You are not an admin yet. Your ID is: " + user.uid;
+    return;
+  }
+  $("msg").textContent = "";
+  $("panel").classList.remove("hide");
+  loadPhotos().catch(e => { $("photos").textContent = "Could not load photos: " + e.message; });
+  loadReports().catch(e => { $("reports").textContent = "Could not load reports: " + e.message; });
+});
+</script>
+</body>
+</html>
