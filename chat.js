@@ -40,16 +40,29 @@ function shrink(file) {
   });
 }
 
-async function uploadVideo(file) {
-  if (!cfg.CLOUD_NAME || !cfg.UPLOAD_PRESET) throw new Error("Video sending is not set up yet.");
-  if (file.size > MAX_VIDEO) throw new Error("This video is too large. Please choose one under 25 MB.");
-  const fd = new FormData();
-  fd.append("file", file);
-  fd.append("upload_preset", cfg.UPLOAD_PRESET);
-  const r = await fetch("https://api.cloudinary.com/v1_1/" + cfg.CLOUD_NAME + "/video/upload", { method: "POST", body: fd });
-  const j = await r.json();
-  if (!r.ok || !j.secure_url) throw new Error((j.error && j.error.message) || "Video upload failed.");
-  return j.secure_url;
+function uploadVideo(file, onPct) {
+  return new Promise((resolve, reject) => {
+    if (!cfg.CLOUD_NAME || !cfg.UPLOAD_PRESET) return reject(new Error("Video sending is not set up yet."));
+    if (file.size > MAX_VIDEO) return reject(new Error("This video is too large. Please choose one under 25 MB."));
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("upload_preset", cfg.UPLOAD_PRESET);
+    const x = new XMLHttpRequest();
+    x.open("POST", "https://api.cloudinary.com/v1_1/" + cfg.CLOUD_NAME + "/video/upload");
+    x.timeout = 240000;
+    x.upload.onprogress = e => {
+      if (e.lengthComputable) onPct(Math.round(e.loaded * 100 / e.total));
+    };
+    x.onload = () => {
+      let j = {};
+      try { j = JSON.parse(x.responseText); } catch (e) {}
+      if (x.status >= 200 && x.status < 300 && j.secure_url) resolve(j.secure_url);
+      else reject(new Error((j.error && j.error.message) || "Video upload failed."));
+    };
+    x.onerror = () => reject(new Error("Network problem while uploading. Check your connection and try again."));
+    x.ontimeout = () => reject(new Error("The upload took too long. Try a shorter video or use Wi-Fi."));
+    x.send(fd);
+  });
 }
 
 function viewImage(src) {
@@ -188,6 +201,7 @@ onAuthStateChanged(auth, async user => {
   const attach = document.createElement("button");
   attach.textContent = "+";
   attach.style.padding = "12px 16px";
+  attach.style.minWidth = "52px";
   const picker = document.createElement("input");
   picker.type = "file";
   picker.accept = "image/*,video/*";
@@ -201,9 +215,13 @@ onAuthStateChanged(auth, async user => {
     if (!f) return;
     attach.disabled = true;
     attach.textContent = "...";
+    const prog = p => { attach.textContent = p >= 100 ? "..." : p + "%"; };
     try {
       if (f.type.startsWith("image/")) await post("\uD83D\uDCF7 Photo", { img: await shrink(f) });
-      else if (f.type.startsWith("video/")) await post("\uD83C\uDFA5 Video", { video: await uploadVideo(f) });
+      else if (f.type.startsWith("video/")) {
+        prog(0);
+        await post("\uD83C\uDFA5 Video", { video: await uploadVideo(f, prog) });
+      }
       else alert("Please choose a photo or a video.");
     } catch (e) {
       alert(e.code === "permission-denied"
