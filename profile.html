@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profile</title>
+<style>
+body{font-family:sans-serif;background:#111;color:#eee;margin:0;padding:16px}
+.wrap{max-width:420px;margin:0 auto}
+a.back{color:#e91e63;text-decoration:none;font-size:16px}
+.card{background:#1c1c1c;border-radius:16px;padding:16px;margin:12px 0}
+button{width:100%;padding:12px;border:0;border-radius:8px;background:#e91e63;color:#fff;font-weight:bold;font-size:16px;margin:6px 0}
+button.s{background:#333}
+.row{display:flex;gap:8px}
+h2{margin:14px 0 2px}
+.muted{color:#aaa;font-size:14px}
+.tag{display:inline-block;background:#2a2a2a;border-radius:20px;padding:5px 12px;margin:6px 6px 0 0;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="home.html">&larr; Back</a>
+  <div id="out" class="card">Loading...</div>
+</div>
+<script type="module">
+import { auth, db } from "./firebase.js";
+import { statusText, isOnline } from "./presence.js";
+import { getBlockSets, blockUser, unblockUser, reportUser, askReason } from "./safety.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const out = document.getElementById("out");
+const uid = new URLSearchParams(location.search).get("uid");
+
+const mk = (tag, css, text) => {
+  const e = document.createElement(tag);
+  if (css) e.style.cssText = css;
+  if (text) e.textContent = text;
+  return e;
+};
+const btn = (label, cls, fn) => {
+  const b = mk("button", "", label);
+  if (cls) b.className = cls;
+  b.onclick = fn;
+  return b;
+};
+const note = text => {
+  out.textContent = "";
+  out.append(mk("p", "", text));
+};
+const ageOf = dob => {
+  const d = new Date(dob), n = new Date();
+  let a = n.getFullYear() - d.getFullYear();
+  if (n < new Date(n.getFullYear(), d.getMonth(), d.getDate())) a--;
+  return a;
+};
+const isImg = u => typeof u === "string" && u.startsWith("data:image/jpeg;base64,");
+
+function render(user, u, sets) {
+  out.textContent = "";
+  const me = uid === user.uid;
+  const iBlocked = sets.blocked.has(uid);
+
+  if (isImg(u.photo)) {
+    const img = mk("img", "width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;display:block");
+    img.src = u.photo;
+    out.append(img);
+  } else {
+    out.append(mk("div", "width:100%;aspect-ratio:1;background:#333;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:80px;color:#aaa", String(u.name).charAt(0).toUpperCase()));
+  }
+
+  out.append(mk("h2", "", u.name + (u.dob ? ", " + ageOf(u.dob) : "")));
+  const st = mk("div", "", me ? "This is how others see you" : statusText(u.lastActive));
+  st.className = "muted";
+  if (!me && isOnline(u.lastActive)) st.style.color = "#8fd694";
+  out.append(st);
+
+  const tags = mk("div");
+  [u.gender, u.city, u.looking ? "Looking for: " + u.looking : ""].filter(Boolean).forEach(t => {
+    const s = mk("span", "", t);
+    s.className = "tag";
+    tags.append(s);
+  });
+  out.append(tags);
+
+  out.append(mk("p", "white-space:pre-wrap;line-height:1.45;margin:16px 0", u.bio || "No bio yet."));
+
+  if (me) {
+    out.append(btn("Edit my profile", "", () => { location.href = "home.html"; }));
+    return;
+  }
+
+  if (!iBlocked) {
+    out.append(btn("Message", "", () => { location.href = "chat.html?uid=" + uid; }));
+  } else {
+    out.append(mk("p", "color:#ff8a80;font-size:14px", "You blocked this person."));
+  }
+
+  const row = mk("div");
+  row.className = "row";
+  row.append(
+    btn(iBlocked ? "Unblock" : "Block", "s", async () => {
+      try {
+        if (iBlocked) {
+          await unblockUser(user.uid, uid);
+          sets.blocked.delete(uid);
+        } else {
+          if (!confirm("Block " + u.name + "? They will not be able to message you.")) return;
+          await blockUser(user.uid, uid);
+          sets.blocked.add(uid);
+        }
+        render(user, u, sets);
+      } catch (e) { alert("That did not work. Please try again."); }
+    }),
+    btn("Report", "s", async () => {
+      const reason = await askReason(u.name);
+      if (!reason) return;
+      try {
+        await reportUser(user.uid, uid, reason);
+        alert("Thanks. Your report was sent for review.");
+      } catch (e) { alert("Could not send the report. Please try again."); }
+    })
+  );
+  out.append(row);
+}
+
+onAuthStateChanged(auth, async user => {
+  if (!user || !user.emailVerified) { location.href = "index.html"; return; }
+  if (!uid) { note("Profile not found."); return; }
+  try {
+    const [snap, sets] = await Promise.all([
+      getDoc(doc(db, "users", uid)),
+      getBlockSets(user.uid)
+    ]);
+    const u = snap.exists() ? snap.data() : null;
+    if (!u || u.banned || !u.name) { note("Profile not found."); return; }
+    if (uid !== user.uid && sets.blockedBy.has(uid)) { note("This profile isn't available."); return; }
+    render(user, u, sets);
+  } catch (e) {
+    note("Could not load this profile.");
+  }
+});
+</script>
+</body>
+</html>
