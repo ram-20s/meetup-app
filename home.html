@@ -2,27 +2,31 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Meetup</title>
 <style>
-body{font-family:sans-serif;background:#111;color:#eee;margin:0;padding:16px}
-.card{max-width:420px;margin:16px auto;background:#1c1c1c;padding:16px;border-radius:14px}
-input,select,textarea,button{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:0;font-size:16px;box-sizing:border-box;background:#2a2a2a;color:#eee;font-family:inherit}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#111;color:#eee;margin:0;padding:0 0 90px}
+.top{position:sticky;top:0;z-index:5;background:#161616;border-bottom:1px solid #262626;padding:14px 16px;text-align:center}
+.logo{font-size:22px;font-weight:800;letter-spacing:.5px;color:#fff}
+.logo b{color:#e91e63}
+.card{background:#1c1c1c;border-radius:16px;padding:16px;margin:14px auto;max-width:460px}
+.card h3{margin:0 0 10px}
+input,select,textarea,button{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:0;font-size:16px;background:#2a2a2a;color:#eee;font-family:inherit}
 button{background:#e91e63;color:#fff;font-weight:bold}
 button.s{background:#333}
-.nav{display:flex;gap:8px;max-width:420px;margin:0 auto}
-.nav button{margin:0}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;background:#161616;border-top:1px solid #262626;padding-bottom:env(safe-area-inset-bottom)}
+.nav button{flex:1;margin:0;border-radius:0;background:none;color:#9a9a9a;font-size:13px;font-weight:600;padding:14px 4px;border-top:3px solid transparent}
+.nav button.s{background:none}
+.nav button.active{color:#e91e63;border-top-color:#e91e63}
+.nav button[style*="background"]{color:#fff}
 .hide{display:none}
-.p{border-top:1px solid #333;padding:10px 0}
+.p{border-top:1px solid #2c2c2c;padding:12px 0}
 #msg{color:#8fd694;min-height:18px}
 </style>
 </head>
 <body>
-<div class="nav">
-  <button class="s" id="tabBrowse">Browse</button>
-  <button class="s" id="tabMe">My profile</button>
-  <button class="s" id="logout">Log out</button>
-</div>
+<div class="top"><span class="logo"><b>&hearts;</b> Meetup</span></div>
 
 <div class="card" id="browseBox">
   <h3>People</h3>
@@ -50,6 +54,20 @@ button.s{background:#333}
   <p id="msg"></p>
 </div>
 
+<div class="nav">
+  <button class="s active" id="tabBrowse">Browse</button>
+  <button class="s" id="tabMe">My profile</button>
+  <button class="s" id="logout">Log out</button>
+</div>
+
+<script>
+document.querySelector(".nav").addEventListener("click", function (e) {
+  var b = e.target.closest("button");
+  if (!b || b.id === "logout") return;
+  document.querySelectorAll(".nav button").forEach(function (x) { x.classList.remove("active"); });
+  b.classList.add("active");
+});
+</script>
 <script type="module" src="home.js"></script>
 </body>
 </html>
