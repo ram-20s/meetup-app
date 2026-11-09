@@ -79,14 +79,17 @@ function render() {
     const row = document.createElement("div");
     row.className = "p";
     const top = document.createElement("div");
-    top.style.cssText = "display:flex;gap:12px;align-items:center";
+    top.style.cssText = "display:flex;gap:12px;align-items:center;cursor:pointer";
+    top.onclick = () => { location.href = "profile.html?uid=" + p.id; };
     const info = document.createElement("div");
+    info.style.minWidth = "0";
     const title = document.createElement("b");
     title.textContent = u.name + ", " + ageOf(u.dob);
     const line = document.createElement("div");
     line.textContent = [u.gender, u.city].filter(Boolean).join(" · ");
     const bio = document.createElement("div");
     bio.textContent = u.bio;
+    bio.style.cssText = "display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:#ccc";
     info.append(title, line, bio);
     top.append(avatar(u), info);
 
