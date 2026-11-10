@@ -5,16 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
 <title>Chat</title>
 <style>
+*{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{font-family:sans-serif;background:#111;color:#eee;display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
-.top{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#1c1c1c;flex:none}
-.top a{color:#e91e63;text-decoration:none;font-size:22px}
-#msgs{flex:1;min-height:0;overflow-y:auto;padding:12px}
-.m{max-width:75%;margin:6px 0;padding:8px 12px;border-radius:14px;background:#2a2a2a;word-wrap:break-word}
-.me{margin-left:auto;background:#e91e63}
-.bar{display:flex;gap:8px;padding:10px;padding-bottom:max(10px,env(safe-area-inset-bottom));background:#1c1c1c;flex:none}
-.bar input{flex:1;min-width:0;padding:12px;border-radius:8px;border:0;background:#2a2a2a;color:#eee;font-size:16px}
-.bar button{padding:12px 18px;border-radius:8px;border:0;background:#e91e63;color:#fff;font-weight:bold;font-size:16px}
+body{font-family:system-ui,-apple-system,sans-serif;background:#111;color:#eee;display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;background:#161616;border-bottom:1px solid #262626;flex:none}
+.top a{color:#e91e63;text-decoration:none;font-size:24px;line-height:1;padding:0 4px}
+#who{flex:1;min-width:110px;cursor:pointer;font-size:17px}
+.top button{padding:7px 11px !important;font-size:13px !important;border-radius:20px !important;background:#2a2a2a !important;color:#eee !important}
+#msgs{flex:1;min-height:0;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column}
+.m{max-width:78%;margin:4px 0;padding:9px 13px;border-radius:18px 18px 18px 4px;background:#262626;word-wrap:break-word;align-self:flex-start;line-height:1.35}
+.me{align-self:flex-end;border-radius:18px 18px 4px 18px;background:linear-gradient(135deg,#e91e63,#c2185b);color:#fff}
+.bar{display:flex;gap:8px;align-items:center;padding:10px;padding-bottom:max(10px,env(safe-area-inset-bottom));background:#161616;border-top:1px solid #262626;flex:none}
+.bar input{flex:1;min-width:0;padding:12px 16px;border-radius:24px;border:0;background:#2a2a2a;color:#eee;font-size:16px;font-family:inherit}
+.bar button{padding:12px 18px;border-radius:24px;border:0;background:#e91e63;color:#fff;font-weight:bold;font-size:16px}
+.bar button:disabled{opacity:.5}
 </style>
 </head>
 <body>
@@ -27,6 +31,12 @@ body{font-family:sans-serif;background:#111;color:#eee;display:flex;flex-directi
   <input id="text" placeholder="Type a message" maxlength="1000">
   <button id="send">Send</button>
 </div>
+<script>
+document.getElementById("who").onclick = function () {
+  var id = new URLSearchParams(location.search).get("uid");
+  if (id) location.href = "profile.html?uid=" + id;
+};
+</script>
 <script type="module" src="chat.js"></script>
 <script type="module" src="chatsafety.js"></script>
 <script type="module" src="call.js"></script>
