@@ -5,37 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Meetup</title>
 <style>
-body{font-family:sans-serif;background:#111;color:#eee;margin:0;padding:20px}
-.wrap{max-width:380px;margin:0 auto}
-.card{background:#1c1c1c;padding:20px;border-radius:14px;margin:16px 0}
-input,button{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:0;font-size:16px;box-sizing:border-box}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#111;color:#eee;margin:0;min-height:100vh}
+.hero{background:linear-gradient(160deg,#e91e63,#7b1fa2);padding:40px 20px 56px;text-align:center}
+.logo{font-size:32px;font-weight:800;letter-spacing:.5px;color:#fff}
+.hero p{margin:8px 0 0;color:#fce4ec;font-size:15px}
+.wrap{max-width:420px;margin:-30px auto 0;padding:0 16px 40px}
+.card{background:#1c1c1c;border-radius:16px;padding:18px;margin:12px 0}
+.card h3{margin:0 0 10px}
+.seg{display:flex;background:#1c1c1c;border-radius:14px;padding:4px;margin-bottom:4px}
+.seg button{flex:1;margin:0;background:none;color:#aaa;padding:12px;border-radius:10px;font-size:15px}
+.seg button.on{background:#e91e63;color:#fff}
+input,button{width:100%;padding:13px;margin:6px 0;border-radius:10px;border:0;font-size:16px;font-family:inherit}
 input{background:#2a2a2a;color:#eee}
 button{background:#e91e63;color:#fff;font-weight:bold}
 button.s{background:#333}
 button.l{background:none;color:#aaa;font-weight:normal;text-decoration:underline}
-h3{margin:0 0 8px}
-#msg{min-height:20px;font-size:14px;color:#ff8a80}
-.hide{display:none}
+#msg{min-height:20px;font-size:14px;color:#ff8a80;margin:10px 4px 0}
+.hint{color:#aaa;font-size:13px;margin:4px 0 8px}
+.hide,.off{display:none}
 </style>
 </head>
 <body>
+<div class="hero">
+  <div class="logo">&hearts; Meetup</div>
+  <p>Meet real people. Chat, call and connect.</p>
+</div>
+
 <div class="wrap">
-  <h2>Meetup</h2>
   <p id="msg"></p>
 
   <div id="loginBox" class="hide">
-    <div class="card">
-      <h3>New here?</h3>
-      <input id="newEmail" type="email" placeholder="Your Gmail address" autocomplete="email">
-      <input id="newPass" type="password" placeholder="Create a password (min 6)" autocomplete="new-password">
-      <button id="signupBtn">Continue with new Gmail</button>
+    <div class="seg">
+      <button id="segLogin" class="on">Log in</button>
+      <button id="segNew">Create account</button>
     </div>
-    <div class="card">
-      <h3>Already have an account?</h3>
+
+    <div class="card" id="cardLogin">
+      <h3>Welcome back</h3>
       <input id="oldEmail" type="email" placeholder="Registered Gmail address" autocomplete="email">
       <input id="oldPass" type="password" placeholder="Your password" autocomplete="current-password">
-      <button class="s" id="loginBtn">Log in</button>
+      <button id="loginBtn">Log in</button>
       <button class="l" id="forgotBtn">Forgot password?</button>
+    </div>
+
+    <div class="card off" id="cardNew">
+      <h3>Join Meetup</h3>
+      <input id="newEmail" type="email" placeholder="Your Gmail address" autocomplete="email">
+      <input id="newPass" type="password" placeholder="Create a password (min 6)" autocomplete="new-password">
+      <p class="hint">We will email you a link to verify your address. You must be 18 or older.</p>
+      <button id="signupBtn">Continue with new Gmail</button>
     </div>
   </div>
 
@@ -48,13 +67,32 @@ h3{margin:0 0 8px}
   </div>
 
   <div id="ageBox" class="hide card">
-    <p>One last step. You must be 18 or older.</p>
+    <h3>One last step</h3>
+    <p class="hint">You must be 18 or older to use Meetup.</p>
     <input id="name" placeholder="Your name">
-    <label>Date of birth</label>
+    <label class="hint">Date of birth</label>
     <input id="dob" type="date">
     <button id="ageBtn">Continue</button>
   </div>
 </div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function mode(m) {
+    var login = m === "login";
+    $("cardLogin").classList.toggle("off", !login);
+    $("cardNew").classList.toggle("off", login);
+    $("segLogin").classList.toggle("on", login);
+    $("segNew").classList.toggle("on", !login);
+  }
+  $("segLogin").onclick = function () { mode("login"); };
+  $("segNew").onclick = function () { mode("new"); };
+  new MutationObserver(function () {
+    if ($("msg").textContent.indexOf("already exists") > -1) mode("login");
+  }).observe($("msg"), { childList: true, characterData: true, subtree: true });
+})();
+</script>
 <script type="module" src="app.js"></script>
 </body>
 </html>
