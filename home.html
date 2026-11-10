@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Meetup</title>
+<title>Ravelle</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg">
 <style>
 *{box-sizing:border-box}
 body{font-family:system-ui,-apple-system,sans-serif;background:#111;color:#eee;margin:0;padding:0 0 90px}
-.top{position:sticky;top:0;z-index:5;background:#161616;border-bottom:1px solid #262626;padding:14px 16px;text-align:center}
-.logo{font-size:22px;font-weight:800;letter-spacing:.5px;color:#fff}
-.logo b{color:#e91e63}
+.top{position:sticky;top:0;z-index:5;background:#161616;border-bottom:1px solid #262626;padding:10px 16px;display:flex;align-items:center;justify-content:center;gap:10px}
+.top img{width:32px;height:32px;border-radius:8px}
+.top span{font-size:21px;font-weight:800;letter-spacing:.5px;color:#fff}
 .card{background:#1c1c1c;border-radius:16px;padding:16px;margin:14px auto;max-width:460px}
 .card h3{margin:0 0 10px}
 input,select,textarea,button{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:0;font-size:16px;background:#2a2a2a;color:#eee;font-family:inherit}
@@ -26,7 +27,7 @@ button.s{background:#333}
 </style>
 </head>
 <body>
-<div class="top"><span class="logo"><b>&hearts;</b> Meetup</span></div>
+<div class="top"><img src="logo.svg" alt=""><span>Ravelle</span></div>
 
 <div class="card" id="browseBox">
   <h3>People</h3>
