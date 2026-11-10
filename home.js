@@ -7,6 +7,7 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/
 
 const $ = id => document.getElementById(id);
 const fields = ["name", "gender", "looking", "city", "bio"];
+const APP = "Ravelle";
 
 const tabInbox = document.createElement("button");
 tabInbox.className = "s";
@@ -31,7 +32,7 @@ const tab = which => {
 const showUnread = n => {
   tabInbox.textContent = n ? "Inbox (" + n + ")" : "Inbox";
   tabInbox.style.background = n ? "#e91e63" : "";
-  document.title = n ? "(" + n + ") Meetup" : "Meetup";
+  document.title = n ? "(" + n + ") " + APP : APP;
 };
 
 const notify = m => {
